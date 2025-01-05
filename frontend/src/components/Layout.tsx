@@ -73,11 +73,19 @@ export function Layout() {
                 </span>
               </div>
             </Link>
-            <div className="px-6 py-4 border-b border-slate-200">
-              <span className="text-sm font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition-colors">
-                Transportation
-              </span>
-            </div>
+            <Link to="/transportations">
+              <div className={`px-6 py-4 border-b border-slate-200 ${
+                location.pathname === '/transportations' ? 'bg-blue-50' : ''
+              }`}>
+                <span className={`text-sm font-medium ${
+                  location.pathname === '/transportations' 
+                    ? 'text-blue-600' 
+                    : 'text-slate-700 hover:text-blue-600'
+                } cursor-pointer transition-colors`}>
+                  Transportation
+                </span>
+              </div>
+            </Link>
             <div className="px-6 py-4">
               <span className="text-sm font-medium text-slate-700 hover:text-blue-600 cursor-pointer transition-colors">
                 Routes

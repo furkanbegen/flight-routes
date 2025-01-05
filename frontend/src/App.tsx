@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { Layout } from './components/Layout'
 import { Login } from './components/Login'
 import { Locations } from './components/Locations'
+import { Transportations } from './components/Transportations'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/locations" replace />} />
           <Route path="locations" element={<Locations />} />
+          <Route path="transportations" element={<Transportations />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
