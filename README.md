@@ -52,8 +52,8 @@ A full-stack application for planning travel routes between locations with multi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/travel-planner.git
-cd travel-planner
+git clone https://github.com/furkanbegen/flight-routes/
+cd flight-routes/
 ```
 
 2. Start all services using Docker Compose:
