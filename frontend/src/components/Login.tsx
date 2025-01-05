@@ -16,10 +16,9 @@ export function Login() {
 
     try {
       const response = await api.post<AuthResponse>('login', { email, password })
-      const { accessToken } = response.data
       
-      // Store the token
-      localStorage.setItem('accessToken', accessToken)
+      // Store the full auth data
+      localStorage.setItem('authData', JSON.stringify(response.data))
       
       // Show success message
       toast.success('Successfully logged in!')
