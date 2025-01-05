@@ -25,10 +25,7 @@ public class AuthService {
       String accessToken = jwtService.generateToken(authentication);
       var principal = (SecurityUser) authentication.getPrincipal();
 
-      return new AuthResponseDTO(
-          principal.getName(),
-          principal.getSurname(),
-          accessToken);
+      return new AuthResponseDTO(principal.getName(), principal.getSurname(), accessToken);
     } else {
       throw new UsernameNotFoundException("Invalid user authRequest..!!");
     }

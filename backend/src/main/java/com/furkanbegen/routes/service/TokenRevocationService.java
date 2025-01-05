@@ -1,10 +1,8 @@
 package com.furkanbegen.routes.service;
 
-
-import org.springframework.stereotype.Component;
-
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
 @Component
 public class TokenRevocationService {

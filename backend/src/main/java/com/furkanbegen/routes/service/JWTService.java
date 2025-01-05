@@ -1,7 +1,7 @@
 package com.furkanbegen.routes.service;
 
-
 import com.furkanbegen.routes.security.SecurityUser;
+import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -10,8 +10,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 
 @Service
 @Slf4j
@@ -40,5 +38,4 @@ public class JWTService {
         JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS512).build(), claims);
     return this.jwtEncoder.encode(encoderParameters).getTokenValue();
   }
-
 }

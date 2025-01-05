@@ -1,5 +1,7 @@
 package com.furkanbegen.routes.controller;
 
+import static com.furkanbegen.routes.constant.AppConstant.API_BASE_PATH;
+
 import com.furkanbegen.routes.dto.AuthRequestDTO;
 import com.furkanbegen.routes.dto.AuthResponseDTO;
 import com.furkanbegen.routes.service.AuthService;
@@ -11,8 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import static com.furkanbegen.routes.constant.AppConstant.API_BASE_PATH;
 
 @RequiredArgsConstructor
 @RestController
