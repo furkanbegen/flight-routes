@@ -21,11 +21,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RouteService {
 
-
+  private final CacheableTransportationService cacheableTransportationService;
   private final LocationRepository locationRepository;
   private final RouteMapper routeMapper;
-  private final CacheableTransportationService cacheableTransportationService;
-
 
   public Page<RouteDTO> findRoutes(Long fromLocationId, Long toLocationId, Pageable pageable) {
     Location fromLocation =
@@ -44,7 +42,10 @@ public class RouteService {
                     new ResourceNotFoundException(
                         String.format("Location not found with id: %d", toLocationId)));
 
-    Map<Location, List<Transportation>> graph = getTransportationGraph();
+    // Use ID-based map for reliable lookups
+    Map<Long, List<Transportation>> graph =
+        cacheableTransportationService.findAll().stream()
+            .collect(Collectors.groupingBy(t -> t.getFromLocation().getId()));
 
     List<List<Transportation>> validRoutes = findValidRoutes(graph, fromLocation, toLocation);
     log.info(
@@ -64,19 +65,11 @@ public class RouteService {
     return new PageImpl<>(pageContent, pageable, routeDTOs.size());
   }
 
-  public Map<Location, List<Transportation>> getTransportationGraph() {
-    log.info("Building transportation graph");
-    List<Transportation> transportations = cacheableTransportationService.findAll();
-    log.info("Building graph from {} cached transportations", transportations.size());
-    return transportations.stream()
-        .collect(Collectors.groupingBy(Transportation::getFromLocation));
-  }
-
   private List<List<Transportation>> findValidRoutes(
-      Map<Location, List<Transportation>> graph, Location fromLocation, Location toLocation) {
+      Map<Long, List<Transportation>> graph, Location fromLocation, Location toLocation) {
     List<List<Transportation>> validRoutes = new ArrayList<>();
     Stack<Transportation> currentPath = new Stack<>();
-    Set<Location> visited = new HashSet<>();
+    Set<Long> visited = new HashSet<>();
 
     findRoutesRecursive(graph, fromLocation, toLocation, currentPath, visited, validRoutes);
 
@@ -84,46 +77,46 @@ public class RouteService {
   }
 
   private void findRoutesRecursive(
-      Map<Location, List<Transportation>> graph,
+      Map<Long, List<Transportation>> graph,
       Location current,
       Location destination,
       Stack<Transportation> currentPath,
-      Set<Location> visited,
+      Set<Long> visited,
       List<List<Transportation>> validRoutes) {
 
-    // Path is not valid if there is more than 3 transportation
     if (currentPath.size() > 3) {
       return;
     }
 
-    if (current.equals(destination) && isValidPath(currentPath)) {
+    if (current.getId().equals(destination.getId()) && isValidPath(currentPath)) {
       log.info(
           "Found valid path: "
               + currentPath.stream()
-                  .map(Transportation::getName)
-                  .collect(Collectors.joining(" -> ")));
+              .map(Transportation::getName)
+              .collect(Collectors.joining(" -> ")));
       validRoutes.add(new ArrayList<>(currentPath));
       return;
     }
 
-    visited.add(current);
+    visited.add(current.getId());
 
     List<Transportation> possibleTransportations =
-        graph.getOrDefault(current, Collections.emptyList());
+        graph.getOrDefault(current.getId(), Collections.emptyList());
 
     for (Transportation possibleTransportation : possibleTransportations) {
-      Location nextLocation = possibleTransportation.getToLocation();
+      Long nextLocationId = possibleTransportation.getToLocation().getId();
 
-      if (visited.contains(nextLocation) || !isValidAddition(currentPath, possibleTransportation)) {
+      if (visited.contains(nextLocationId) || !isValidAddition(currentPath, possibleTransportation)) {
         continue;
       }
 
       currentPath.push(possibleTransportation);
-      findRoutesRecursive(graph, nextLocation, destination, currentPath, visited, validRoutes);
+      findRoutesRecursive(
+          graph, possibleTransportation.getToLocation(), destination, currentPath, visited, validRoutes);
       currentPath.pop();
     }
 
-    visited.remove(current);
+    visited.remove(current.getId());
   }
 
   private boolean isValidPath(Stack<Transportation> path) {
@@ -207,3 +200,4 @@ public class RouteService {
     return true;
   }
 }
+
