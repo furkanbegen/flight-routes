@@ -56,4 +56,9 @@ public class LocationService {
 
     locationRepository.delete(location);
   }
+
+  public Page<LocationDTO> searchLocations(String query, Pageable pageable) {
+    return locationRepository.searchByNameContainingIgnoreCase(query, pageable)
+        .map(locationMapper::toDTO);
+  }
 }

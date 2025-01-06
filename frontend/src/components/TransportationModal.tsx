@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import { locationService } from '../api/locationService'
 import { TransportationType, type Transportation, type TransportationRequest } from '../api/transportationService'
 import toast from 'react-hot-toast'
+import { SearchableSelect } from './SearchableSelect'
 
 interface TransportationModalProps {
   isOpen: boolean
@@ -23,6 +24,8 @@ export function TransportationModal({ isOpen, onClose, onSubmit, initialData, mo
     price: null,
     durationInMinutes: null
   })
+  const [fromLocation, setFromLocation] = useState<Location | null>(null)
+  const [toLocation, setToLocation] = useState<Location | null>(null)
 
   useEffect(() => {
     // Fetch locations for dropdowns
@@ -40,17 +43,10 @@ export function TransportationModal({ isOpen, onClose, onSubmit, initialData, mo
     }
   }, [isOpen])
 
+  // Reset form when modal closes or mode changes
   useEffect(() => {
-    if (initialData && mode === 'edit') {
-      setFormData({
-        name: initialData.name,
-        type: initialData.type,
-        fromLocationId: initialData.fromLocation.id,
-        toLocationId: initialData.toLocation.id,
-        price: initialData.price,
-        durationInMinutes: initialData.durationInMinutes
-      })
-    } else {
+    if (!isOpen) {
+      // Reset form when modal closes
       setFormData({
         name: '',
         type: TransportationType.FLIGHT,
@@ -59,15 +55,34 @@ export function TransportationModal({ isOpen, onClose, onSubmit, initialData, mo
         price: null,
         durationInMinutes: null
       })
+      setFromLocation(null)
+      setToLocation(null)
+    } else if (mode === 'edit' && initialData) {
+      // Set form data for edit mode
+      setFromLocation(initialData.fromLocation)
+      setToLocation(initialData.toLocation)
+      setFormData({
+        name: initialData.name,
+        type: initialData.type,
+        fromLocationId: initialData.fromLocation.id,
+        toLocationId: initialData.toLocation.id,
+        price: initialData.price,
+        durationInMinutes: initialData.durationInMinutes
+      })
     }
-  }, [initialData, mode])
+  }, [isOpen, mode, initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+    if (!fromLocation || !toLocation) return
     
+    setIsSubmitting(true)
     try {
-      await onSubmit(formData)
+      await onSubmit({
+        ...formData,
+        fromLocationId: fromLocation.id,
+        toLocationId: toLocation.id
+      })
       onClose()
     } finally {
       setIsSubmitting(false)
@@ -137,41 +152,31 @@ export function TransportationModal({ isOpen, onClose, onSubmit, initialData, mo
                     </select>
                   </div>
 
-                  <div>
-                    <label htmlFor="fromLocation" className="block text-sm font-medium text-gray-700">
-                      From Location
-                    </label>
-                    <select
-                      id="fromLocation"
-                      value={formData.fromLocationId}
-                      onChange={(e) => setFormData(prev => ({ ...prev, fromLocationId: Number(e.target.value) }))}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select location</option>
-                      {locations.map(location => (
-                        <option key={location.id} value={location.id}>{location.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <SearchableSelect
+                    label="From Location"
+                    value={fromLocation}
+                    onChange={(location) => {
+                      setFromLocation(location)
+                      if (location) {
+                        setFormData(prev => ({ ...prev, fromLocationId: location.id }))
+                      }
+                    }}
+                    onSearch={(query) => locationService.searchLocations(query)}
+                    placeholder="Search locations..."
+                  />
 
-                  <div>
-                    <label htmlFor="toLocation" className="block text-sm font-medium text-gray-700">
-                      To Location
-                    </label>
-                    <select
-                      id="toLocation"
-                      value={formData.toLocationId}
-                      onChange={(e) => setFormData(prev => ({ ...prev, toLocationId: Number(e.target.value) }))}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select location</option>
-                      {locations.map(location => (
-                        <option key={location.id} value={location.id}>{location.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <SearchableSelect
+                    label="To Location"
+                    value={toLocation}
+                    onChange={(location) => {
+                      setToLocation(location)
+                      if (location) {
+                        setFormData(prev => ({ ...prev, toLocationId: location.id }))
+                      }
+                    }}
+                    onSearch={(query) => locationService.searchLocations(query)}
+                    placeholder="Search locations..."
+                  />
 
                   <div>
                     <label htmlFor="price" className="block text-sm font-medium text-gray-700">

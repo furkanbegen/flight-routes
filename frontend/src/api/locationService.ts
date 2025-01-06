@@ -38,5 +38,10 @@ export const locationService = {
 
   deleteLocation: async (id: number) => {
     await api.delete(`locations/${id}`)
+  },
+
+  searchLocations: async (query: string) => {
+    const response = await api.get<PageResponse<Location>>(`locations/search?query=${query}`)
+    return response.data.content
   }
 } 

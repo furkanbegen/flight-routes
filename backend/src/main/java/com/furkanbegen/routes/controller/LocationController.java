@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -51,5 +52,12 @@ public class LocationController {
   public ResponseEntity<Void> deleteLocation(@PathVariable(name = "id") Long id) {
     locationService.deleteLocation(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/search")
+  public Page<LocationDTO> searchLocations(
+      @RequestParam String query,
+      @PageableDefault Pageable pageable) {
+    return locationService.searchLocations(query, pageable);
   }
 }
