@@ -1,4 +1,4 @@
-package com.furkanbegen.routes.confıg;
+package com.furkanbegen.routes.config;
 
 import com.furkanbegen.routes.security.CustomAuthenticationFailureHandler;
 import com.furkanbegen.routes.security.CustomJwtDecoder;

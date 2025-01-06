@@ -1,4 +1,4 @@
-package com.furkanbegen.routes.confıg;
+package com.furkanbegen.routes.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
