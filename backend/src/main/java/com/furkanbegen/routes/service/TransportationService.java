@@ -4,7 +4,6 @@ import com.furkanbegen.routes.dto.TransportationDTO;
 import com.furkanbegen.routes.dto.TransportationRequestDTO;
 import com.furkanbegen.routes.exception.ResourceNotFoundException;
 import com.furkanbegen.routes.mapper.TransportationMapper;
-import com.furkanbegen.routes.repository.TransportationRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,47 +14,38 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TransportationService {
 
-  private final TransportationRepository transportationRepository;
+  private final CacheableTransportationService cacheableTransportationService;
   private final TransportationMapper transportationMapper;
 
   public Page<TransportationDTO> getAllTransportations(Pageable pageable) {
-    return transportationRepository.findAll(pageable).map(transportationMapper::toDTO);
+    return cacheableTransportationService.findAllPaged(pageable).map(transportationMapper::toDTO);
   }
 
   public TransportationDTO getTransportationById(Long id) {
-    var transportation =
-        transportationRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
-
+    var transportation = cacheableTransportationService.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
     return transportationMapper.toDTO(transportation);
   }
 
   public TransportationDTO createTransportation(@Valid TransportationRequestDTO requestDTO) {
     var transportation = transportationMapper.toEntity(requestDTO);
-
-    return transportationMapper.toDTO(transportationRepository.save(transportation));
+    var savedTransportation = cacheableTransportationService.save(transportation);
+    return transportationMapper.toDTO(savedTransportation);
   }
 
-  public TransportationDTO updateTransportation(
-      Long id, @Valid TransportationRequestDTO requestDTO) {
-
-    var transportation =
-        transportationRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
-
-    var transportationForUpdate = transportationMapper.toEntity(requestDTO, transportation);
-
-    return transportationMapper.toDTO(transportationRepository.save(transportationForUpdate));
+  public TransportationDTO updateTransportation(Long id, @Valid TransportationRequestDTO requestDTO) {
+    var existingTransportation = cacheableTransportationService.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
+    
+    var transportationForUpdate = transportationMapper.toEntity(requestDTO, existingTransportation);
+    var updatedTransportation = cacheableTransportationService.update(transportationForUpdate);
+    return transportationMapper.toDTO(updatedTransportation);
   }
 
   public void deleteTransportation(Long id) {
-    var transportation =
-        transportationRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
-
-    transportationRepository.delete(transportation);
+    if (!cacheableTransportationService.existsById(id)) {
+      throw new ResourceNotFoundException("Transportation not found");
+    }
+    cacheableTransportationService.deleteById(id);
   }
 }

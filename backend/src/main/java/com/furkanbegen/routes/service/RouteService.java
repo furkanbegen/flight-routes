@@ -7,9 +7,9 @@ import com.furkanbegen.routes.model.Location;
 import com.furkanbegen.routes.model.Transportation;
 import com.furkanbegen.routes.model.TransportationType;
 import com.furkanbegen.routes.repository.LocationRepository;
-import com.furkanbegen.routes.repository.TransportationRepository;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,20 +18,14 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RouteService {
 
-  private final TransportationRepository transportationRepository;
+
   private final LocationRepository locationRepository;
   private final RouteMapper routeMapper;
+  private final CacheableTransportationService cacheableTransportationService;
 
-  public RouteService(
-      TransportationRepository transportationRepository,
-      LocationRepository locationRepository,
-      RouteMapper routeMapper) {
-    this.transportationRepository = transportationRepository;
-    this.locationRepository = locationRepository;
-    this.routeMapper = routeMapper;
-  }
 
   public Page<RouteDTO> findRoutes(Long fromLocationId, Long toLocationId, Pageable pageable) {
     Location fromLocation =
@@ -50,9 +44,7 @@ public class RouteService {
                     new ResourceNotFoundException(
                         String.format("Location not found with id: %d", toLocationId)));
 
-    Map<Location, List<Transportation>> graph =
-        transportationRepository.findAll().stream()
-            .collect(Collectors.groupingBy(Transportation::getFromLocation));
+    Map<Location, List<Transportation>> graph = getTransportationGraph();
 
     List<List<Transportation>> validRoutes = findValidRoutes(graph, fromLocation, toLocation);
     log.info(
@@ -70,6 +62,14 @@ public class RouteService {
         start >= routeDTOs.size() ? Collections.emptyList() : routeDTOs.subList(start, end);
 
     return new PageImpl<>(pageContent, pageable, routeDTOs.size());
+  }
+
+  public Map<Location, List<Transportation>> getTransportationGraph() {
+    log.info("Building transportation graph");
+    List<Transportation> transportations = cacheableTransportationService.findAll();
+    log.info("Building graph from {} cached transportations", transportations.size());
+    return transportations.stream()
+        .collect(Collectors.groupingBy(Transportation::getFromLocation));
   }
 
   private List<List<Transportation>> findValidRoutes(
