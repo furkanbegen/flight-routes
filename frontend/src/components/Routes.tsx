@@ -1,39 +1,26 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { routeService, type Route } from '../api/routeService'
 import { locationService, type Location } from '../api/locationService'
 import { TransportationType } from '../api/transportationService'
+import { SearchableSelect } from './SearchableSelect'
 import toast from 'react-hot-toast'
 
 export function Routes() {
   const [routes, setRoutes] = useState<Route[]>([])
-  const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
-  const [fromLocationId, setFromLocationId] = useState<number>(0)
-  const [toLocationId, setToLocationId] = useState<number>(0)
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await locationService.getAllLocations(0, 100)
-        setLocations(response.content)
-      } catch (error) {
-        toast.error('Failed to load locations')
-      }
-    }
-    fetchLocations()
-  }, [])
+  const [fromLocation, setFromLocation] = useState<Location | null>(null)
+  const [toLocation, setToLocation] = useState<Location | null>(null)
 
   const handleSearch = async () => {
-    if (!fromLocationId || !toLocationId) {
+    if (!fromLocation || !toLocation) {
       toast.error('Please select both locations')
       return
     }
 
     setLoading(true)
     try {
-      const routes = await routeService.findRoutes(fromLocationId, toLocationId)
-      console.log('Found routes:', routes)
+      const routes = await routeService.findRoutes(fromLocation.id, toLocation.id)
       setRoutes(routes)
       setSelectedRoute(null)
     } catch (error) {
@@ -44,44 +31,33 @@ export function Routes() {
     }
   }
 
-
   return (
     <div className="flex h-full">
       <div className="flex-1 p-6 lg:p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-800 mb-4">Find Routes</h1>
           <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-              <select
-                value={fromLocationId}
-                onChange={(e) => setFromLocationId(Number(e.target.value))}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="">Select location</option>
-                {locations.map(location => (
-                  <option key={location.id} value={location.id}>{location.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-              <select
-                value={toLocationId}
-                onChange={(e) => setToLocationId(Number(e.target.value))}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="">Select location</option>
-                {locations.map(location => (
-                  <option key={location.id} value={location.id}>{location.name}</option>
-                ))}
-              </select>
-            </div>
+            <SearchableSelect
+              label="From"
+              value={fromLocation}
+              onChange={setFromLocation}
+              onSearch={(query) => locationService.searchLocations(query)}
+              placeholder="Search departure location..."
+            />
+
+            <SearchableSelect
+              label="To"
+              value={toLocation}
+              onChange={setToLocation}
+              onSearch={(query) => locationService.searchLocations(query)}
+              placeholder="Search destination location..."
+            />
+
             <div className="flex items-end">
               <button
                 onClick={handleSearch}
                 disabled={loading}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-50"
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? 'Searching...' : 'Search Routes'}
               </button>
@@ -89,43 +65,53 @@ export function Routes() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          {routes.length > 0 ? (
-            <div className="divide-y divide-slate-200">
-              {routes.map((route, index) => {
-                const flight = route.transportations.find(t => t.type === TransportationType.FLIGHT)
-                const transportCount = route.transportations.length
-                return (
-                  <div
-                    key={index}
-                    onClick={() => setSelectedRoute(route)}
-                    className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors ${
-                      selectedRoute === route ? 'bg-blue-50' : ''
-                    }`}
-                  >
-                    <div className="text-sm font-medium text-slate-900 mb-2">
-                      Via {flight?.fromLocation.name}
-                    </div>
-                    <div className="mt-2 text-sm text-slate-600">
- {transportCount} {transportCount === 1 ? 'transport' : 'transports'} -
-                      {route.totalDuration ? `${route.totalDuration} min` : 'N/A'} - 
-                      {route.totalPrice ? `$${route.totalPrice}` : 'N/A'}
-                    </div>
+        {/* Routes List */}
+        <div className="space-y-4">
+          {routes.map((route, idx) => (
+            <div
+              key={idx}
+              onClick={() => setSelectedRoute(route)}
+              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                selectedRoute === route
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-blue-300'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-medium">
+                    {route.transportations[0].fromLocation.name} →{' '}
+                    {route.transportations[route.transportations.length - 1].toLocation.name}
                   </div>
-                )
-              })}
+                  <div className="text-sm text-gray-600">
+                    {route.transportations.length} stops • {route.totalDuration} min •{' '}
+                    ${route.totalPrice}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedRoute(route)
+                  }}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  View Details
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="p-8 text-center text-slate-500">
-              {loading ? 'Searching for routes...' : 'No routes found'}
+          ))}
+
+          {routes.length === 0 && !loading && (
+            <div className="text-center py-8 text-gray-500">
+              No routes found. Try different locations.
             </div>
           )}
         </div>
       </div>
 
-      {/* Side Panel for Route Details */}
+      {/* Route Details Sidebar */}
       {selectedRoute && (
-        <div className="w-96 border-l border-slate-200 bg-white p-6 overflow-y-auto flex flex-col h-full">
+        <div className="w-96 border-l border-slate-200 bg-white p-6 overflow-y-auto">
           <h2 className="text-lg font-semibold text-slate-800 mb-6">Route Details</h2>
           
           <div className="flex-1">
