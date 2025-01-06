@@ -40,10 +40,16 @@ export function SearchableSelect({
           setIsLoading(false)
         }
       }
-    }, 300) // 300ms debounce
+    }, 300)
 
     return () => clearTimeout(timeoutId)
   }, [query, onSearch])
+
+  const handleClear = () => {
+    setQuery('')
+    onChange(null)
+    setOptions([])
+  }
 
   return (
     <div className="relative">
@@ -56,31 +62,52 @@ export function SearchableSelect({
           <Combobox.Input
             className={`w-full rounded-md border ${
               error ? 'border-red-300' : 'border-gray-300'
-            } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-20`}
             displayValue={(option: Option | null) => option?.name ?? ''}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={placeholder}
           />
           
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            {isLoading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-            ) : (
-              <svg
-                className="h-5 w-5 text-gray-400"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
+            {(value || query) && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="p-1 text-gray-400 hover:text-gray-500"
               >
-                <path
-                  d="M7 7l3-3 3 3m0 6l-3 3-3-3"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+                <svg 
+                  className="h-5 w-5" 
+                  viewBox="0 0 20 20" 
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+                  />
+                </svg>
+              </button>
             )}
-          </Combobox.Button>
+
+            <Combobox.Button className="flex items-center">
+              {isLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+              ) : (
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path
+                    d="M7 7l3-3 3 3m0 6l-3 3-3-3"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </Combobox.Button>
+          </div>
 
           <Transition
             as={Fragment}
