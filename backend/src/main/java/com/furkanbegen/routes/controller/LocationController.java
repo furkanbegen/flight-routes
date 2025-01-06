@@ -56,8 +56,7 @@ public class LocationController {
 
   @GetMapping("/search")
   public Page<LocationDTO> searchLocations(
-      @RequestParam String query,
-      @PageableDefault Pageable pageable) {
+      @RequestParam String query, @PageableDefault Pageable pageable) {
     return locationService.searchLocations(query, pageable);
   }
 }

@@ -92,8 +92,8 @@ public class RouteService {
       log.info(
           "Found valid path: "
               + currentPath.stream()
-              .map(Transportation::getName)
-              .collect(Collectors.joining(" -> ")));
+                  .map(Transportation::getName)
+                  .collect(Collectors.joining(" -> ")));
       validRoutes.add(new ArrayList<>(currentPath));
       return;
     }
@@ -106,13 +106,19 @@ public class RouteService {
     for (Transportation possibleTransportation : possibleTransportations) {
       Long nextLocationId = possibleTransportation.getToLocation().getId();
 
-      if (visited.contains(nextLocationId) || !isValidAddition(currentPath, possibleTransportation)) {
+      if (visited.contains(nextLocationId)
+          || !isValidAddition(currentPath, possibleTransportation)) {
         continue;
       }
 
       currentPath.push(possibleTransportation);
       findRoutesRecursive(
-          graph, possibleTransportation.getToLocation(), destination, currentPath, visited, validRoutes);
+          graph,
+          possibleTransportation.getToLocation(),
+          destination,
+          currentPath,
+          visited,
+          validRoutes);
       currentPath.pop();
     }
 
@@ -200,4 +206,3 @@ public class RouteService {
     return true;
   }
 }
-

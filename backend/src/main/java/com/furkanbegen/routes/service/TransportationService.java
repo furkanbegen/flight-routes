@@ -22,8 +22,10 @@ public class TransportationService {
   }
 
   public TransportationDTO getTransportationById(Long id) {
-    var transportation = cacheableTransportationService.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
+    var transportation =
+        cacheableTransportationService
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
     return transportationMapper.toDTO(transportation);
   }
 
@@ -33,10 +35,13 @@ public class TransportationService {
     return transportationMapper.toDTO(savedTransportation);
   }
 
-  public TransportationDTO updateTransportation(Long id, @Valid TransportationRequestDTO requestDTO) {
-    var existingTransportation = cacheableTransportationService.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
-    
+  public TransportationDTO updateTransportation(
+      Long id, @Valid TransportationRequestDTO requestDTO) {
+    var existingTransportation =
+        cacheableTransportationService
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Transportation not found"));
+
     var transportationForUpdate = transportationMapper.toEntity(requestDTO, existingTransportation);
     var updatedTransportation = cacheableTransportationService.update(transportationForUpdate);
     return transportationMapper.toDTO(updatedTransportation);

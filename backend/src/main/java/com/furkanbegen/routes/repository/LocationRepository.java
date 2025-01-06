@@ -10,6 +10,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LocationRepository extends JpaRepository<Location, Long> {
-    @Query("SELECT l FROM Location l WHERE LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%'))")
-    Page<Location> searchByNameContainingIgnoreCase(@Param("query") String query, Pageable pageable);
+  @Query("SELECT l FROM Location l WHERE LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+  Page<Location> searchByNameContainingIgnoreCase(@Param("query") String query, Pageable pageable);
 }

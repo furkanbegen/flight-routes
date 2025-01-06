@@ -58,7 +58,8 @@ public class LocationService {
   }
 
   public Page<LocationDTO> searchLocations(String query, Pageable pageable) {
-    return locationRepository.searchByNameContainingIgnoreCase(query, pageable)
+    return locationRepository
+        .searchByNameContainingIgnoreCase(query, pageable)
         .map(locationMapper::toDTO);
   }
 }
