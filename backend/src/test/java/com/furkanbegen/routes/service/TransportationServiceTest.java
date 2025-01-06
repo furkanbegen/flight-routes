@@ -12,7 +12,6 @@ import com.furkanbegen.routes.mapper.TransportationMapper;
 import com.furkanbegen.routes.model.Location;
 import com.furkanbegen.routes.model.Transportation;
 import com.furkanbegen.routes.model.TransportationType;
-import com.furkanbegen.routes.repository.TransportationRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -28,10 +27,8 @@ import org.springframework.data.domain.Pageable;
 @ExtendWith(MockitoExtension.class)
 class TransportationServiceTest {
 
-  @Mock private TransportationRepository transportationRepository;
-
+  @Mock private CacheableTransportationService cacheableTransportationService;
   @Mock private TransportationMapper transportationMapper;
-
   @InjectMocks private TransportationService transportationService;
 
   @Test
@@ -72,7 +69,7 @@ class TransportationServiceTest {
     Page<Transportation> transportationPage = new PageImpl<>(transportations);
     Pageable pageable = PageRequest.of(0, 10);
 
-    when(transportationRepository.findAll(pageable)).thenReturn(transportationPage);
+    when(cacheableTransportationService.findAllPaged(pageable)).thenReturn(transportationPage);
     when(transportationMapper.toDTO(transportation)).thenReturn(transportationDTO);
 
     // when
@@ -89,7 +86,7 @@ class TransportationServiceTest {
     assertEquals(transportationDTO.getPrice(), resultDTO.getPrice());
     assertEquals(transportationDTO.getDurationInMinutes(), resultDTO.getDurationInMinutes());
 
-    verify(transportationRepository).findAll(pageable);
+    verify(cacheableTransportationService).findAllPaged(pageable);
     verify(transportationMapper).toDTO(transportation);
   }
 
@@ -127,7 +124,7 @@ class TransportationServiceTest {
             500.0,
             240.0);
 
-    when(transportationRepository.findById(1L)).thenReturn(Optional.of(transportation));
+    when(cacheableTransportationService.findById(1L)).thenReturn(Optional.of(transportation));
     when(transportationMapper.toDTO(transportation)).thenReturn(transportationDTO);
 
     // when
@@ -141,19 +138,19 @@ class TransportationServiceTest {
     assertEquals(transportationDTO.getPrice(), result.getPrice());
     assertEquals(transportationDTO.getDurationInMinutes(), result.getDurationInMinutes());
 
-    verify(transportationRepository).findById(1L);
+    verify(cacheableTransportationService).findById(1L);
     verify(transportationMapper).toDTO(transportation);
   }
 
   @Test
   void getTransportationById_WhenTransportationDoesNotExist_ShouldThrowResourceNotFoundException() {
     // given
-    when(transportationRepository.findById(1L)).thenReturn(Optional.empty());
+    when(cacheableTransportationService.findById(1L)).thenReturn(Optional.empty());
 
     // when & then
     assertThrows(
         ResourceNotFoundException.class, () -> transportationService.getTransportationById(1L));
-    verify(transportationRepository).findById(1L);
+    verify(cacheableTransportationService).findById(1L);
     verify(transportationMapper, never()).toDTO(any());
   }
 
@@ -200,7 +197,7 @@ class TransportationServiceTest {
             240.0);
 
     when(transportationMapper.toEntity(requestDTO)).thenReturn(transportation);
-    when(transportationRepository.save(transportation)).thenReturn(transportation);
+    when(cacheableTransportationService.save(transportation)).thenReturn(transportation);
     when(transportationMapper.toDTO(transportation)).thenReturn(transportationDTO);
 
     // when
@@ -215,7 +212,7 @@ class TransportationServiceTest {
     assertEquals(transportation.getDurationInMinutes(), result.getDurationInMinutes());
 
     verify(transportationMapper).toEntity(requestDTO);
-    verify(transportationRepository).save(transportation);
+    verify(cacheableTransportationService).save(transportation);
     verify(transportationMapper).toDTO(transportation);
   }
 
@@ -270,26 +267,26 @@ class TransportationServiceTest {
             600.0,
             250.0);
 
-    when(transportationRepository.findById(1L)).thenReturn(Optional.of(existingTransportation));
-    when(transportationMapper.toEntity(requestDTO, existingTransportation))
-        .thenReturn(updatedTransportation);
-    when(transportationRepository.save(updatedTransportation)).thenReturn(updatedTransportation);
-    when(transportationMapper.toDTO(updatedTransportation)).thenReturn(updatedDTO);
+    when(cacheableTransportationService.findById(1L))
+        .thenReturn(Optional.of(existingTransportation));
+    when(transportationMapper.toEntity(any(), any())).thenReturn(updatedTransportation);
+    when(cacheableTransportationService.update(any())).thenReturn(updatedTransportation);
+    when(transportationMapper.toDTO(any())).thenReturn(updatedDTO);
 
     // when
     TransportationDTO result = transportationService.updateTransportation(1L, requestDTO);
 
     // then
     assertNotNull(result);
-    assertEquals(updatedTransportation.getId(), result.getId());
-    assertEquals(updatedTransportation.getName(), result.getName());
-    assertEquals(updatedTransportation.getType(), result.getType());
-    assertEquals(updatedTransportation.getPrice(), result.getPrice());
-    assertEquals(updatedTransportation.getDurationInMinutes(), result.getDurationInMinutes());
+    assertEquals(updatedDTO.getId(), result.getId());
+    assertEquals(updatedDTO.getName(), result.getName());
+    assertEquals(updatedDTO.getType(), result.getType());
+    assertEquals(updatedDTO.getPrice(), result.getPrice());
+    assertEquals(updatedDTO.getDurationInMinutes(), result.getDurationInMinutes());
 
-    verify(transportationRepository).findById(1L);
+    verify(cacheableTransportationService).findById(1L);
     verify(transportationMapper).toEntity(requestDTO, existingTransportation);
-    verify(transportationRepository).save(updatedTransportation);
+    verify(cacheableTransportationService).update(updatedTransportation);
     verify(transportationMapper).toDTO(updatedTransportation);
   }
 
@@ -298,46 +295,42 @@ class TransportationServiceTest {
     // given
     TransportationRequestDTO requestDTO = new TransportationRequestDTO();
     requestDTO.setName("Updated Flight");
-    when(transportationRepository.findById(1L)).thenReturn(Optional.empty());
+    when(cacheableTransportationService.findById(1L)).thenReturn(Optional.empty());
 
     // when & then
     assertThrows(
         ResourceNotFoundException.class,
         () -> transportationService.updateTransportation(1L, requestDTO));
 
-    verify(transportationRepository).findById(1L);
+    verify(cacheableTransportationService).findById(1L);
     verify(transportationMapper, never()).toEntity(any(), any());
-    verify(transportationRepository, never()).save(any());
+    verify(cacheableTransportationService, never()).save(any());
     verify(transportationMapper, never()).toDTO(any());
   }
 
   @Test
   void deleteTransportation_WhenTransportationExists_ShouldDeleteSuccessfully() {
     // given
-    Transportation transportation = new Transportation();
-    transportation.setId(1L);
-    transportation.setName("Flight TK1234");
-
-    when(transportationRepository.findById(1L)).thenReturn(Optional.of(transportation));
+    when(cacheableTransportationService.existsById(1L)).thenReturn(true);
 
     // when
     transportationService.deleteTransportation(1L);
 
     // then
-    verify(transportationRepository).findById(1L);
-    verify(transportationRepository).delete(transportation);
+    verify(cacheableTransportationService).existsById(1L);
+    verify(cacheableTransportationService).deleteById(1L);
   }
 
   @Test
   void deleteTransportation_WhenTransportationDoesNotExist_ShouldThrowResourceNotFoundException() {
     // given
-    when(transportationRepository.findById(1L)).thenReturn(Optional.empty());
+    when(cacheableTransportationService.existsById(1L)).thenReturn(false);
 
     // when & then
     assertThrows(
         ResourceNotFoundException.class, () -> transportationService.deleteTransportation(1L));
 
-    verify(transportationRepository).findById(1L);
-    verify(transportationRepository, never()).delete(any());
+    verify(cacheableTransportationService).existsById(1L);
+    verify(cacheableTransportationService, never()).deleteById(any());
   }
 }

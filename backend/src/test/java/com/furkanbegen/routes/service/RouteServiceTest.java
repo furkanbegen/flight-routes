@@ -13,7 +13,6 @@ import com.furkanbegen.routes.model.Location;
 import com.furkanbegen.routes.model.Transportation;
 import com.furkanbegen.routes.model.TransportationType;
 import com.furkanbegen.routes.repository.LocationRepository;
-import com.furkanbegen.routes.repository.TransportationRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,12 +34,10 @@ class RouteServiceTest {
   public static final String BUS = "Bus";
   public static final String FLIGHT = "Flight";
   public static final String UBER = "Uber";
-  @Mock private TransportationRepository transportationRepository;
 
+  @Mock private CacheableTransportationService cacheableTransportationService;
   @Mock private LocationRepository locationRepository;
-
   @Mock private RouteMapper routeMapper;
-
   @InjectMocks private RouteService routeService;
 
   private Location taksimSquare;
@@ -110,7 +107,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(2L)).thenReturn(Optional.of(taksimSquare));
     when(locationRepository.findById(4L)).thenReturn(Optional.of(wembleyStadium));
-    when(transportationRepository.findAll())
+    when(cacheableTransportationService.findAll())
         .thenReturn(
             List.of(
                 taksimSquareToIstanbulAirport,
@@ -165,7 +162,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(2L)).thenReturn(Optional.of(taksimSquare));
     when(locationRepository.findById(4L)).thenReturn(Optional.of(wembleyStadium));
-    when(transportationRepository.findAll())
+    when(cacheableTransportationService.findAll())
         .thenReturn(
             List.of(
                 taksimSquareToIstanbulAirport,
@@ -293,7 +290,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(5L)).thenReturn(Optional.of(cityA));
     when(locationRepository.findById(7L)).thenReturn(Optional.of(cityC));
-    when(transportationRepository.findAll()).thenReturn(List.of(flightAToB, busToC));
+    when(cacheableTransportationService.findAll()).thenReturn(List.of(flightAToB, busToC));
 
     RouteDTO mockRouteDTO = new RouteDTO();
     mockRouteDTO.setTransportations(List.of());
@@ -347,7 +344,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(5L)).thenReturn(Optional.of(cityA));
     when(locationRepository.findById(7L)).thenReturn(Optional.of(cityC));
-    when(transportationRepository.findAll()).thenReturn(List.of(uberAToB, flightToC));
+    when(cacheableTransportationService.findAll()).thenReturn(List.of(uberAToB, flightToC));
 
     RouteDTO mockRouteDTO = new RouteDTO();
     mockRouteDTO.setTransportations(List.of());
@@ -388,7 +385,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(5L)).thenReturn(Optional.of(cityA));
     when(locationRepository.findById(6L)).thenReturn(Optional.of(cityB));
-    when(transportationRepository.findAll()).thenReturn(List.of(flightAToB));
+    when(cacheableTransportationService.findAll()).thenReturn(List.of(flightAToB));
 
     RouteDTO mockRouteDTO = new RouteDTO();
     List<TransportationDTO> transportationDTOs = List.of(createTransportationDTO(flightAToB));
@@ -431,7 +428,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(11L)).thenReturn(Optional.of(home));
     when(locationRepository.findById(4L)).thenReturn(Optional.of(wembleyStadium));
-    when(transportationRepository.findAll())
+    when(cacheableTransportationService.findAll())
         .thenReturn(
             List.of(
                 homeToTaksim,
@@ -468,7 +465,7 @@ class RouteServiceTest {
     // given
     when(locationRepository.findById(2L)).thenReturn(Optional.of(istanbulAirport));
     when(locationRepository.findById(11L)).thenReturn(Optional.of(paris));
-    when(transportationRepository.findAll())
+    when(cacheableTransportationService.findAll())
         .thenReturn(
             List.of(
                 taksimSquareToIstanbulAirport, istanbulToParis, istanbulAirportToHeatrowAirport));
