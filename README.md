@@ -189,6 +189,62 @@ cd backend
 ./mvnw verify
 ```
 
+## Redis Caching
+
+The application uses Redis for caching transportation data to improve performance. Redis is used to cache:
+- List of all transportations
+- Individual transportation queries
+
+### Redis Configuration
+
+Redis is configured in `docker-compose.yml`:
+```yaml
+services:
+  redis:
+    image: redis:7.2.4
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - routes-network
+```
+
+Cache configuration is managed in `RedisConfig.java`:
+```java
+@Configuration
+@EnableCaching
+public class RedisConfig {
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofHours(1))
+            .serializeValuesWith(
+                RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.json())
+            );
+
+        return RedisCacheManager.builder(connectionFactory)
+            .cacheDefaults(config)
+            .build();
+    }
+}
+```
+
+### Cache Usage
+
+The application uses the following cache strategies:
+- `@Cacheable("transportations")` for retrieving transportations
+- `@CacheEvict(value = "transportations", allEntries = true)` for invalidating cache on updates
+
+### Benefits
+- Reduced database load
+- Improved response times for frequently accessed data
+- Automatic cache invalidation on data updates
+
+### Cache Configuration Properties
+- TTL (Time To Live): 1 hour
+- Serialization: JSON
+- Cache Key: Based on method parameters
 
 ## License
 
