@@ -68,12 +68,13 @@ public class RouteService {
 
   private List<List<Transportation>> findValidRoutes(
       Map<Long, List<Transportation>> graph, Location fromLocation, Location toLocation) {
+    // Pre-size collections based on known constraints
     List<List<Transportation>> validRoutes = new ArrayList<>();
-    Stack<Transportation> currentPath = new Stack<>();
-    Set<Long> visited = new HashSet<>();
+    Deque<Transportation> currentPath = new ArrayDeque<>(4);
+    Set<Long> visited = HashSet.newHashSet(graph.size());
 
     findRoutesRecursive(graph, fromLocation, toLocation, currentPath, visited, validRoutes);
-
+    validRoutes.forEach(Collections::reverse);
     return validRoutes;
   }
 
@@ -81,7 +82,7 @@ public class RouteService {
       Map<Long, List<Transportation>> graph,
       Location current,
       Location destination,
-      Stack<Transportation> currentPath,
+      Deque<Transportation> currentPath,
       Set<Long> visited,
       List<List<Transportation>> validRoutes) {
 
@@ -112,7 +113,7 @@ public class RouteService {
         continue;
       }
 
-      currentPath.push(possibleTransportation);
+      currentPath.addFirst(possibleTransportation);
       findRoutesRecursive(
           graph,
           possibleTransportation.getToLocation(),
@@ -120,7 +121,7 @@ public class RouteService {
           currentPath,
           visited,
           validRoutes);
-      currentPath.pop();
+      currentPath.removeFirst();
     }
 
     visited.remove(current.getId());
