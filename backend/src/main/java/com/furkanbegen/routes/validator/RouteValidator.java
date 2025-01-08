@@ -2,11 +2,10 @@ package com.furkanbegen.routes.validator;
 
 import com.furkanbegen.routes.model.Transportation;
 import com.furkanbegen.routes.model.TransportationType;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import org.springframework.stereotype.Component;
 
 @Component
 public class RouteValidator {
