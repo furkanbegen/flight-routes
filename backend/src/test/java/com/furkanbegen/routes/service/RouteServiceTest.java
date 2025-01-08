@@ -13,6 +13,7 @@ import com.furkanbegen.routes.model.Location;
 import com.furkanbegen.routes.model.Transportation;
 import com.furkanbegen.routes.model.TransportationType;
 import com.furkanbegen.routes.repository.LocationRepository;
+import com.furkanbegen.routes.validator.RouteValidator;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,7 @@ class RouteServiceTest {
   @Mock private CacheableTransportationService cacheableTransportationService;
   @Mock private LocationRepository locationRepository;
   @Mock private RouteMapper routeMapper;
+  @Mock private RouteValidator routeValidator;
   @InjectMocks private RouteService routeService;
 
   private Location taksimSquare;
@@ -126,6 +128,9 @@ class RouteServiceTest {
 
     lenient().when(routeMapper.convertToRouteDTO(any())).thenReturn(mockRouteDTO);
 
+    when(routeValidator.isValidPath(any())).thenReturn(true);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(true);
+
     // when
     Page<RouteDTO> routes = routeService.findRoutes(2L, 4L, PageRequest.of(0, 10));
 
@@ -204,6 +209,9 @@ class RouteServiceTest {
               }
               return null;
             });
+
+    when(routeValidator.isValidPath(any())).thenReturn(true);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(true);
 
     // when
     Page<RouteDTO> routes = routeService.findRoutes(2L, 4L, PageRequest.of(0, 10));
@@ -296,6 +304,9 @@ class RouteServiceTest {
     mockRouteDTO.setTransportations(List.of());
     lenient().when(routeMapper.convertToRouteDTO(any())).thenReturn(mockRouteDTO);
 
+    when(routeValidator.isValidPath(any())).thenReturn(true);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(true);
+
     // when
     Page<RouteDTO> routes = routeService.findRoutes(5L, 7L, PageRequest.of(0, 10));
 
@@ -350,6 +361,9 @@ class RouteServiceTest {
     mockRouteDTO.setTransportations(List.of());
     lenient().when(routeMapper.convertToRouteDTO(any())).thenReturn(mockRouteDTO);
 
+    when(routeValidator.isValidPath(any())).thenReturn(true);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(true);
+
     // when
     Page<RouteDTO> routes = routeService.findRoutes(5L, 7L, PageRequest.of(0, 10));
 
@@ -395,6 +409,9 @@ class RouteServiceTest {
 
     lenient().when(routeMapper.convertToRouteDTO(any())).thenReturn(mockRouteDTO);
 
+    when(routeValidator.isValidPath(any())).thenReturn(true);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(true);
+
     // when
     Page<RouteDTO> routes = routeService.findRoutes(5L, 6L, PageRequest.of(0, 10));
 
@@ -436,9 +453,7 @@ class RouteServiceTest {
                 istanbulAirportToHeatrowAirport,
                 heatrowAirportToWembleyStadium));
 
-    RouteDTO mockRouteDTO = new RouteDTO();
-    mockRouteDTO.setTransportations(List.of());
-    lenient().when(routeMapper.convertToRouteDTO(any())).thenReturn(mockRouteDTO);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(false);
 
     // when
     Page<RouteDTO> routes = routeService.findRoutes(11L, 4L, PageRequest.of(0, 10));
@@ -458,21 +473,17 @@ class RouteServiceTest {
     var istanbulToParis = new Transportation();
     istanbulToParis.setId(11L);
     istanbulToParis.setFromLocation(istanbulAirport);
-    istanbulToParis.setToLocation(taksimSquare);
-    istanbulToParis.setType(TransportationType.OTHER);
-    istanbulToParis.setName(UBER);
+    istanbulToParis.setToLocation(paris);
+    istanbulToParis.setType(TransportationType.FLIGHT);
 
     // given
     when(locationRepository.findById(2L)).thenReturn(Optional.of(istanbulAirport));
     when(locationRepository.findById(11L)).thenReturn(Optional.of(paris));
     when(cacheableTransportationService.findAll())
-        .thenReturn(
-            List.of(
-                taksimSquareToIstanbulAirport, istanbulToParis, istanbulAirportToHeatrowAirport));
+        .thenReturn(List.of(istanbulAirportToHeatrowAirport, istanbulToParis));
 
-    RouteDTO mockRouteDTO = new RouteDTO();
-    mockRouteDTO.setTransportations(List.of());
-    lenient().when(routeMapper.convertToRouteDTO(any())).thenReturn(mockRouteDTO);
+    when(routeValidator.isValidPath(any())).thenReturn(false);
+    when(routeValidator.isValidAddition(any(), any())).thenReturn(true);
 
     // when
     Page<RouteDTO> routes = routeService.findRoutes(2L, 11L, PageRequest.of(0, 10));
