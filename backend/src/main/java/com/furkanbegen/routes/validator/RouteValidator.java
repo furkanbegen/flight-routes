@@ -5,6 +5,7 @@ import com.furkanbegen.routes.model.TransportationType;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Stack;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -47,57 +48,47 @@ public class RouteValidator {
   }
 
   public boolean isValidAddition(
-      Deque<Transportation> currentPath, Transportation candidateTransportation) {
+      Deque<Transportation> currentPath, Transportation newTransportation) {
 
     if (currentPath.isEmpty()) {
       return true;
     }
 
-    List<Transportation> potentialPath = new ArrayList<>(currentPath);
-    potentialPath.add(candidateTransportation);
+    List<Transportation> pathWithNew = new ArrayList<>(currentPath);
+    pathWithNew.add(newTransportation);
 
-    if (exceedsFlightLimit(potentialPath)) {
+    long flightCount =
+        pathWithNew.stream()
+            .filter(transportation -> TransportationType.FLIGHT.equals(transportation.getType()))
+            .count();
+
+    // There can be at most one flight
+    if (flightCount > 1) {
       return false;
     }
 
-    return isValidTransportationSequence(currentPath, candidateTransportation);
-  }
+    // If we're trying to add OTHER after FLIGHT when we already have one after flight
+    if (TransportationType.OTHER.equals(newTransportation.getType())) {
+      boolean hasFlightInPath =
+          currentPath.stream()
+              .anyMatch(
+                  transportation -> TransportationType.FLIGHT.equals(transportation.getType()));
+      if (hasFlightInPath) {
+        long afterFlightCount = 0;
+        boolean flightFound = false;
+        for (Transportation transportation : currentPath) {
+          if (flightFound && TransportationType.FLIGHT.equals(transportation.getType())) {
+            afterFlightCount++;
+          }
 
-  private boolean exceedsFlightLimit(List<Transportation> path) {
-    long flightCount =
-        path.stream()
-            .filter(transportation -> TransportationType.FLIGHT.equals(transportation.getType()))
-            .count();
-    return flightCount > 1;
-  }
-
-  private boolean isValidTransportationSequence(
-      Deque<Transportation> currentPath, Transportation candidateTransportation) {
-    if (!TransportationType.OTHER.equals(candidateTransportation.getType())) {
-      return true;
-    }
-
-    boolean containsFlight =
-        currentPath.stream()
-            .anyMatch(transportation -> TransportationType.FLIGHT.equals(transportation.getType()));
-
-    if (!containsFlight) {
-      return true;
-    }
-
-    return !hasOtherTransportationAfterFlight(currentPath);
-  }
-
-  private boolean hasOtherTransportationAfterFlight(Deque<Transportation> path) {
-    boolean flightEncountered = false;
-    for (Transportation transportation : path) {
-      if (flightEncountered && TransportationType.OTHER.equals(transportation.getType())) {
-        return true;
-      }
-      if (TransportationType.FLIGHT.equals(transportation.getType())) {
-        flightEncountered = true;
+          if (TransportationType.FLIGHT.equals(transportation.getType())) {
+            flightFound = true;
+          }
+        }
+        return afterFlightCount == 0;
       }
     }
-    return false;
+
+    return true;
   }
 }
